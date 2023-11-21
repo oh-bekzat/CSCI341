@@ -1,74 +1,63 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-
-const API_URL = 'http://your-api-url'; // Replace with your actual API URL
+import React, { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom'
+import Login from './components/Login'
+import Registration from './components/Registration'
+import Jobs from './components/Jobs'
 
 const App = () => {
-  const [userData, setUserData] = useState({
-    email: '',
-    password: '',
-  });
+  const [isLoggedIn, setLoggedIn] = useState(false)
 
-  const [token, setToken] = useState('');
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    setLoggedIn(!!token)
+  }, [])
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setUserData((prevData) => ({ ...prevData, [name]: value }));
-  };
+  const handleLogin = (token) => {
+    // Set the token in localStorage and update the login state
+    localStorage.setItem('token', token)
+    setLoggedIn(true)
+  }
 
-  const handleRegistration = async () => {
-    try {
-      await axios.post(`${API_URL}/users/create`, userData);
-      console.log('User registered successfully!');
-    } catch (error) {
-      console.error('Error registering user:', error);
-    }
-  };
-
-  const handleLogin = async () => {
-    try {
-      const response = await axios.post(`${API_URL}/login`, {
-        email: userData.email,
-        password: userData.password,
-      });
-
-      const { token } = response.data;
-      setToken(token);
-
-      console.log('User logged in successfully!');
-      console.log('Token:', token);
-    } catch (error) {
-      console.error('Error logging in:', error);
-    }
-  };
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    setLoggedIn(false)
+  }
 
   return (
-    <div>
-      <h2>Registration</h2>
-      <form>
-        {/* Render registration form fields here */}
-        <button type="button" onClick={handleRegistration}>Register</button>
-      </form>
+    <Router>
+      <div>
+        <nav>
+          <ul>
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li>
+              <Link to="/login">Login</Link>
+            </li>
+            <li>
+              <Link to="/registration">Registration</Link>
+            </li>
+            {isLoggedIn && (
+              <li>
+                <Link to="/jobs">Jobs</Link>
+              </li>
+            )}
+            {isLoggedIn && (
+              <li>
+                <button onClick={handleLogout}>Logout</button>
+              </li>
+            )}
+          </ul>
+        </nav>
 
-      <h2>Login</h2>
-      <form>
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={userData.email}
-          onChange={handleInputChange}
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={userData.password}
-          onChange={handleInputChange}
-        />
-        <button type="button" onClick={handleLogin}>Login</button>
-      </form>
-    </div>
+        <Routes>
+          <Route path="/"/>
+          <Route path="/login" element={<Login onLogin={(token) => handleLogin(token)} />} />
+          <Route path="/registration" element={<Registration />} />
+          {isLoggedIn && <Route path="/jobs" element={<Jobs />} />}
+        </Routes>
+      </div>
+    </Router>
   );
 };
 
